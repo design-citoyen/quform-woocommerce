@@ -1,74 +1,28 @@
 <?php
  
 /*
- * Plugin Name: Quform WooCommerce Integration
- * Description: Select a product inside a form.
- * Version: 1.0
+ Plugin Name: Quform WooCommerce Integration
+ Description: Select a product inside a form.
+ Author: Designium.ca
+ Author URI: http://www.designium.ca/
+ Version: 1.0
  */
  
-// Form Sync
+ 
+ 
+ 
+ 
+ 
+// The form will appear in: /my account/order list
 
-function my_quform_woocomm_products($form)
-{
-    $dropdown = $form->getElement('iphorm_1_1');
+add_action('woocommerce_my_account_my_orders_column_order-actions', function ($order) {
+    $actions = wc_get_account_orders_actions( $order );
 
-    if ( ! $dropdown instanceof iPhorm_Element_Select) {
-        return;
+    if ( ! empty( $actions ) ) {
+        foreach ( $actions as $key => $action ) {
+            echo '<a href="' . esc_url( $action['url'] ) . '" class="button ' . sanitize_html_class( $key ) . '">' . esc_html( $action['name'] ) . '</a>';
+        }
     }
 
-    $options = array();
-    $query = new WP_Query(array(
-        'post_type' => 'product',
-        'tax_query' => array(
-            array(
-                'taxonomy' => 'product_cat',
-                'field'    => 'slug',
-                'terms'    => 'camp-meeting',
-            )
-        )
-    ));
-
-    while ($query->have_posts()) {
-        $query->the_post();
-        $options[] = array(
-            'label' => get_the_title(),
-            'value' => get_the_ID()
-        );
-    }
-
-    wp_reset_postdata();
-
-    $dropdown->setOptions($options);
-}
-add_action('iphorm_pre_display_2', 'my_quform_woocomm_products');
-
-
-// Payment code
-
-function my_quform_create_order($form)
-{
-	if ( ! function_exists('wc_create_order')) {
-		return;
-	}
-
-	$address = array(
-		'first_name' => $form->getValue('iphorm_1_3'),
-		'last_name' => $form->getValue('iphorm_1_3'),
-		'address_1' => $form->getValue('iphorm_1_4'),
-		'address_2' => $form->getValue('iphorm_1_5'),
-		'city' => $form->getValue('iphorm_1_6'),
-		'state' => $form->getValue('iphorm_1_7'),
-		'postcode' => $form->getValue('iphorm_1_8'),
-		'country' => $form->getValue('iphorm_1_9'),
-		'company' => '',
-		'phone' => '',
-		'email' => $form->getValue('iphorm_1_11')
-	);
-
-	$order = wc_create_order();
-	$order->add_product(get_product($form->getValue('iphorm_1_1')), 1);
-	$order->set_address($address, 'billing');
-	$order->set_address($address, 'shipping');
-	$order->calculate_totals();
-}
-add_action('iphorm_post_process_2', 'my_quform_create_order');
+    echo '<a class="button form">' . do_shortcode('[quform_popup id="1" values="order_id=' . $order->get_order_number() . '"]Formulaire inscription[/quform_popup]') . '</a>';
+});
